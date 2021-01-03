@@ -1,0 +1,62 @@
+Description: EC2 Metabase
+Parameters:
+  KeyName:
+    Description: 'Key name to ssh into instance'
+    Type: String
+  InstanceType:
+    Description: 'Instance Type'
+    Type: String
+    Default: t3a.small
+  NameTag:
+    Description: 'Instance Name'
+    Type: String
+    Default: Metabase
+  SetupIp:
+    Description: 'Restrict Security groups to this IP in first Setup'
+    Type: String
+
+Resources:
+  EC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: ami-069302b967476d106
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - !Ref SG
+      Tags:
+        - Key: Name
+          Value: !Ref NameTag
+      UserData:
+        !Base64 |
+        #!/bin/bash
+        sudo yum install -y docker
+        sudo yum install -y git-all
+        sudo service docker start
+        git clone https://github.com/dacort/metabase-athena-driver.git
+        cd metabase-athena-driver
+        sudo docker build -t metabase/athena .
+        sudo docker run -d -p 3000:3000 --name metabase metabase/athena
+
+
+
+  SG:
+    Properties:
+      GroupDescription: shh, http, https traffic allowed
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+        - CidrIp: !Ref SetupIp
+          FromPort: 3000
+          IpProtocol: tcp
+          ToPort: 3000
+        - CidrIp: !Ref SetupIp
+          FromPort: 3000
+          IpProtocol: tcp
+          ToPort: 3000
+    Type: 'AWS::EC2::SecurityGroup'
+
+
+
