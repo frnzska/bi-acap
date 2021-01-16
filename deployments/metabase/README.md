@@ -6,6 +6,7 @@ Pro:
 - easy dashboard sharings
 - reminders via slack, email etc. 
 - easy setup 
+- quite a lot of extra features
 
 Con:
 - sql query editor with Athena not working out of the box
